@@ -1,216 +1,56 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ServiceStream Pro | Enterprise Workflow</title>
-    <!-- External Libraries -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Link to CSS file -->
+    <title>DomainGen Pro | AI-Powered Domain Finder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="app-shell">
+<div class="app-container">
     <aside class="sidebar">
-        <div class="sidebar-logo">
-            <div class="logo-icon">S</div>
-            <h1>Service<span>Stream</span></h1>
+        <div class="logo">
+            <div class="logo-icon">D</div>
+            <h1>Domain<span>Gen</span></h1>
         </div>
-        <nav class="sidebar-nav">
-            <a href="#" class="nav-item active">📋 All Tickets</a>
-            <a href="#" class="nav-item">🚀 Dispatch Queue</a>
-            <a href="#" class="nav-item">📦 Inventory</a>
-        </nav>
-        <div class="sidebar-footer">
-            <button id="theme-toggle" class="btn-theme">🌓 Toggle Mode</button>
+        <p class="sidebar-desc">Paste news articles or social media posts to find available brand names.</p>
+        
+        <div class="settings">
+            <label>Domain Extension</label>
+            <select id="tld-select">
+                <option value=".com">.com</option>
+                <option value=".net">.net</option>
+                <option value=".org">.org</option>
+                <option value=".io">.io</option>
+                <option value=".ai">.ai</option>
+            </select>
         </div>
     </aside>
 
     <main class="main-content">
-        <header class="top-bar">
-            <div class="search-wrapper">
-                <input type="text" id="search-bar" placeholder="Search Number, Customer, or Parts...">
-            </div>
-            <div class="top-bar-actions">
-                <button class="btn btn-secondary" onclick="clearAllTickets()">Clear All</button>
-                <label for="excel-upload" class="btn btn-secondary" style="cursor:pointer">📥 Import Excel</label>
-                <input type="file" id="excel-upload" hidden>
-                <button class="btn btn-primary" onclick="openManualModal()">+ New Ticket</button>
-            </div>
+        <header class="top-header">
+            <h2>Analyze Text for Domains</h2>
+            <button class="btn btn-primary" onclick="processText()">Generate & Check</button>
         </header>
 
-        <div class="content-body">
-            <section class="dashboard-stats">
-                <div class="stat-card">
-                    <span class="stat-label">Total Tickets</span>
-                    <div class="stat-value" id="stat-total">0</div>
-                </div>
-                <div class="stat-card urgent">
-                    <span class="stat-label">Critical P1</span>
-                    <div class="stat-value" id="stat-critical">0</div>
-                </div>
-                <div class="stat-card warning">
-                    <span class="stat-label">Awaiting Parts</span>
-                    <div class="stat-value" id="stat-parts">0</div>
-                </div>
-                <div class="stat-card info">
-                    <span class="stat-label">Dispatched</span>
-                    <div class="stat-value" id="stat-dispatched">0</div>
-                </div>
-            </section>
+        <section class="input-section">
+            <textarea id="input-text" placeholder="Paste your social media post or news article here... e.g., 'SpaceX is launching a new rocket to Mars for satellite internet'"></textarea>
+        </section>
 
-            <section class="table-controls">
-                <div class="control-group">
-                    <label>Agent Assignment</label>
-                    <select id="filter-agent">
-                        <option value="all">All Agents</option>
-                        <option value="Agent 1">Agent 1</option>
-                        <option value="Agent 2">Agent 2</option>
-                        <option value="Agent 3">Agent 3</option>
-                        <option value="Agent 4">Agent 4</option>
-                        <option value="Agent 5">Agent 5</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>Priority</label>
-                    <select id="filter-priority">
-                        <option value="all">All Priorities</option>
-                        <option value="1">P1 - Critical</option>
-                        <option value="2">P2 - High</option>
-                        <option value="3">P3 - Moderate</option>
-                        <option value="4">P4 - Low</option>
-                    </select>
-                </div>
-            </section>
-
-            <div class="table-container">
-                <table id="main-table">
-                    <thead>
-                        <tr>
-                            <th>Number</th>
-                            <th>Customer</th>
-                            <th>Description</th>
-                            <th>Priority</th>
-                            <th>State</th>
-                            <th>Assignee</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ticket-body"></tbody>
-                </table>
+        <section class="results-section">
+            <div class="results-header">
+                <h3>Available Domains</h3>
+                <span id="status-msg">Ready</span>
             </div>
-        </div>
+            <div id="results-grid" class="results-grid">
+                <div class="empty-state">No domains generated yet.</div>
+            </div>
+        </section>
     </main>
 </div>
 
-<!-- MODAL: ADD NEW TICKET -->
-<div id="manual-modal" class="modal-overlay">
-    <div class="modal-window">
-        <div class="modal-header">
-            <h2>Create New Request</h2>
-            <button class="close-btn" onclick="closeManualModal()">&times;</button>
-        </div>
-        <form id="manual-form" class="pro-form">
-            <div class="form-grid">
-                <div class="input-group">
-                    <label>Ticket Number</label>
-                    <input type="text" id="add-number" placeholder="INC00123" required>
-                </div>
-                <div class="input-group">
-                    <label>Priority Level</label>
-                    <select id="add-priority">
-                        <option value="1">P1 - Critical</option>
-                        <option value="2">P2 - High</option>
-                        <option value="3">P3 - Moderate</option>
-                        <option value="4" selected>P4 - Low</option>
-                    </select>
-                </div>
-                <div class="input-group full-width">
-                    <label>Short Description</label>
-                    <input type="text" id="add-desc" placeholder="Brief summary of the issue" required>
-                </div>
-                <div class="input-group">
-                    <label>Customer Name</label>
-                    <input type="text" id="add-customer" required>
-                </div>
-                <div class="input-group">
-                    <label>User ID</label>
-                    <input type="text" id="add-userid" required>
-                </div>
-                <div class="input-group">
-                    <label>Assign Agent</label>
-                    <select id="add-assigned">
-                        <option value="Agent 1">Agent 1</option>
-                        <option value="Agent 2">Agent 2</option>
-                        <option value="Agent 3">Agent 3</option>
-                        <option value="Agent 4">Agent 4</option>
-                        <option value="Agent 5">Agent 5</option>
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label>Initial State</label>
-                    <select id="add-state">
-                        <option value="New">New</option>
-                        <option value="In Progress">In Progress</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeManualModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">Create Ticket</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- TICKET DETAIL PANEL -->
-<div id="detail-modal" class="modal-overlay">
-    <div class="modal-window large-modal">
-        <div class="modal-header">
-            <h2 id="detail-title">Ticket Details</h2>
-            <button class="close-btn" onclick="closeDetailModal()">&times;</button>
-        </div>
-        <div class="detail-split">
-            <aside class="detail-meta">
-                <div class="meta-item">
-                    <label>Status</label>
-                    <select id="det-update-state" onchange="updateTicketField('state', this.value)">
-                        <option value="New">New</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Parts Ordered">Parts Ordered</option>
-                        <option value="Tech Dispatched">Tech Dispatched</option>
-                        <option value="Resolved">Resolved</option>
-                        <option value="Closed">Closed</option>
-                    </select>
-                </div>
-                <div class="meta-item">
-                    <label>Technician Assigned</label>
-                    <input type="text" id="det-tech-name" placeholder="Name..." onchange="updateTicketField('techName', this.value)">
-                </div>
-                <div class="meta-item">
-                    <label>ETA Date/Time</label>
-                    <input type="datetime-local" id="det-tech-eta" onchange="updateTicketField('techETA', this.value)">
-                </div>
-                <hr style="margin: 15px 0; border: 0; border-top: 1px solid var(--border);">
-                <div class="readonly-info">
-                    <p style="font-size: 0.85rem; margin-bottom: 5px;"><strong>Customer:</strong> <span id="det-cust"></span></p>
-                    <p style="font-size: 0.85rem;"><strong>Opened:</strong> <span id="det-open"></span></p>
-                </div>
-            </aside>
-            <main class="detail-activity">
-                <div class="activity-feed" id="notes-list"></div>
-                <div class="activity-input">
-                    <textarea id="note-text" placeholder="Write a note..."></textarea>
-                    <button class="btn btn-primary" onclick="addNote()">Post Update</button>
-                </div>
-            </main>
-        </div>
-    </div>
-</div>
-
-<!-- Link to JS file -->
 <script src="script.js"></script>
 </body>
 </html>
